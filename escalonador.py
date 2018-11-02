@@ -128,6 +128,18 @@ class SJF:
                 if self.__listaProcess[i].getID() < self.__listaProcess[j].getID():
                     self.__listaProcess[i], self.__listaProcess[j] = self.__listaProcess[j], self.__listaProcess[i]
 
+        # ESP = orange + "  " + clean + '|'
+        # EXEC = blue + "  " + clean + '|'
+        # BLOQ = red + "  " + clean + '|'
+        # INI = yellow + "  " + clean + '|'
+
+        print("Legenda:")
+        print("Processo a iniciar: |" + INI)
+        print("Estado de Execução: |" + EXEC)
+        print("Estado de Espera:   |" + ESP)
+        print("Estado de Bloqueio: |" + BLOQ)
+        print()
+
         for processo in self.__listaProcess:
             processo.printProcesso()
 
