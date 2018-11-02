@@ -75,10 +75,7 @@ class SJF:
             ##Reordena os processos aptos
             #self.ordenaTempo()
             ##
-            if len(self.__filaBloqueio):
-                self.bloqExec(0)
-                
-            if len(self.__fila):  
+            if len(self.__fila):
                 if self.__execucao == 0:
                     menor = 0
                     menorTempo = self.__fila[0].getTempoExec()
@@ -87,10 +84,13 @@ class SJF:
                             menor = i
                     print("menir", menor)
                     self.__execucao = self.__fila.pop(menor)
-            
-            
+            print("iteração: ", self.__ciclo, "proc: ", self.__execucao)
             for proc in self.__fila:
                 proc.pronto()
+            
+            if len(self.__filaBloqueio):
+                self.bloqExec(0)
+            
             print(len(self.__fila), self.__ciclo)
             #salva o que aconteceu para cada processo fora do escalonador
             i = self.__indice
