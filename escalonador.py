@@ -25,6 +25,19 @@ class Processo:
         self.__TB = 0 #tempo bloqueado
         self.__historico = ""
         self.__TTE = 0 #Tempo Total de Espera
+
+    def clean(self):
+        self.__posIO = 0
+        self.__cicloP = 0
+        self.__TB = 0
+        self.__historico = ""
+        self.__TTE = 0
+
+    def getPrio(self):
+        return self.__Prio
+
+    def printDetail(self):
+        print("processo",self.__ID,"DF",self.__DF,"prio",self.__Prio,"TC",self.__TC,"IO",self.__IO,"PosIo",self.__posIO,"cicloP",self.__cicloP,"TB",self.__TB,"historico",self.__historico,"TTE",self.__TTE)
     
     def getID(self):
         return self.__ID
@@ -210,7 +223,6 @@ class RoundRobin:
         Verdade = 1
         while Verdade:
             self.populaFila()
-            print("fila", self.__fila)
             if len(self.__fila):
                 if self.__execucao == 0:
                     self.__execucao = self.__fila.pop(0)
@@ -251,6 +263,99 @@ class RoundRobin:
 
 # --------------------------------Escalonador-Round-Robin-----------------------
 
+# --------------------------------Escalonador-Prioridade------------------------
+class Prioridade:
+    def __init__(self, Processos):
+        self.__listaProcess = Processos
+        self.__fila = []
+        self.__filaBloqueio = []
+        self.__ciclo = 0
+        self.__quantum = 2
+        self.__indice = 0
+        self.__execucao = 0
+
+    def bloqExec(self, indice):
+        if len(self.__filaBloqueio) > indice:
+            if self.__filaBloqueio[indice].bloqExecP():
+                self.__fila.append(self.__filaBloqueio.pop(indice))
+                self.bloqExec(indice)
+            else:
+                self.bloqExec(indice + 1)
+
+    def historico(self):
+        for i in range(1, len(self.__listaProcess)):
+            for j in range(0, i):
+                if self.__listaProcess[i].getID() < self.__listaProcess[j].getID():
+                    self.__listaProcess[i], self.__listaProcess[j] = self.__listaProcess[j], self.__listaProcess[i]
+
+        for processo in self.__listaProcess:
+            processo.printProcesso()
+
+    def populaFila(self):
+        if len(self.__listaProcess) > self.__indice:
+            if self.__listaProcess[self.__indice].getTC() == self.__ciclo:
+                self.__fila.append(self.__listaProcess[self.__indice])
+                self.__indice+=1
+                self.populaFila()
+
+    def executa(self):
+        Verdade = 1
+        while Verdade:
+            self.populaFila()
+            if len(self.__fila):
+                if self.__execucao == 0:
+                    maxP = self.__fila[0].getPrio()
+                    ind = 0
+                else:
+                    maxP = self.__execucao.getPrio()
+                    ind = -1
+                for i in range(0, len(self.__fila)):
+                    if(maxP < self.__fila[i].getPrio()):
+                        maxP = self.__fila[i].getPrio()
+                        ind = i
+                if self.__execucao == 0:
+                    self.__execucao = self.__fila.pop(ind)
+                elif ind != (-1):
+                    self.__fila.append(self.__execucao)
+                    self.__execucao = self.__fila.pop(ind)
+            for proc in self.__fila:
+                proc.pronto()
+            
+            if len(self.__filaBloqueio):
+                self.bloqExec(0)
+            #salva o que aconteceu para cada processo fora do escalonador
+            i = self.__indice
+            j = len(self.__listaProcess)
+            while(i < j):
+                self.__listaProcess[i].espera()
+                i += 1
+            ##
+            if self.__execucao != 0:
+                aux = self.__execucao.executaP()
+                if aux == 1:
+                    self.__execucao = 0
+                elif aux == 2:
+                    self.__filaBloqueio.append(self.__execucao)
+                    self.__execucao = 0
+            self.__ciclo += 1
+            
+            ## codigo para RR
+            if len(self.__listaProcess) == self.__indice:
+                if self.__execucao == 0:
+                    if len(self.__fila) == 0:
+                        if len(self.__filaBloqueio) == 0:
+                            Verdade = 0
+
+# --------------------------------Escalonador-Prioridade------------------------
+
+def organizaProcessos(listaP):
+    for proc in listaP:
+        proc.clean()
+    for i in range(1,len(listaP)):
+        for j in range(i):
+            if listaP[j].getTC() > listaP[i].getTC(): 
+                listaP[j],listaP[i] = listaP[i],listaP[j]
+
 # --------------------------------Main------------------------------------------
 #------------abre-arquivo---------------------------------
 arquivo = open(sys.argv[1],'r')
@@ -263,17 +368,22 @@ processos = arquivo.readlines()
 listaP = []
 for processo in processos:
     listaP.append(Processo(processo.split()))
-for i in range(1,len(listaP)):
-    for j in range(i):
-        if listaP[j].getTC() > listaP[i].getTC(): 
-            listaP[j],listaP[i] = listaP[i],listaP[j]
+organizaProcessos(listaP)
 #------------Fim-Ordena-Processos-------------------------
-# sjf = SJF(listaP)
-# sjf.executa()
-# sjf.historico()
+sjf = SJF(listaP)
+sjf.executa()
+sjf.historico()
 
+organizaProcessos(listaP)
 
 print("Round Robin!")
 rr = RoundRobin(listaP)
 rr.executa()
 rr.historico()
+
+organizaProcessos(listaP)
+
+print("\nPrioridade!")
+prio = Prioridade(listaP)
+prio.executa()
+prio.historico()
