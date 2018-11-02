@@ -24,6 +24,7 @@ class Processo:
         self.__cicloP = 0 #ciclo atual de execucao do processo
         self.__TB = 0 #tempo bloqueado
         self.__historico = ""
+        self.__TTE = 0 #Tempo Total de Espera
     
     def getID(self):
         return self.__ID
@@ -34,6 +35,9 @@ class Processo:
     def getTempoExec(self):
         return self.__DF - self.__cicloP
 
+    def getTTE(self):
+        return self.__TTE
+    
     def printProcesso(self):
         print("processo[", self.__ID ,"]|", self.__historico.replace('-', INI).replace('b', BLOQ).replace('e', EXEC).replace('s', ESP), sep = "")
 
@@ -50,6 +54,7 @@ class Processo:
 
     def pronto(self):
         self.__historico += "s"
+        self.__TTE += 1
 
     def executaP(self):
         self.__cicloP += 1
@@ -123,26 +128,41 @@ class SJF:
                             Verdade = 0
             
     def historico(self):
-        for i in range(1, len(self.__listaProcess)):
-            for j in range(0, i):
-                if self.__listaProcess[i].getID() < self.__listaProcess[j].getID():
-                    self.__listaProcess[i], self.__listaProcess[j] = self.__listaProcess[j], self.__listaProcess[i]
-
-        # ESP = orange + "  " + clean + '|'
-        # EXEC = blue + "  " + clean + '|'
-        # BLOQ = red + "  " + clean + '|'
-        # INI = yellow + "  " + clean + '|'
-
-        print("Legenda:")
+        print("LEGENDA:------------------------------------------------------------")
+        print()
+        print("TTE = Tempo Total de Espera")
+        print("TME = Tempo Médio de Espera")
         print("Processo a iniciar: |" + INI)
         print("Estado de Execução: |" + EXEC)
         print("Estado de Espera:   |" + ESP)
         print("Estado de Bloqueio: |" + BLOQ)
         print()
+        print("--------------------------------------------------------------------")
+        
+        for i in range(1, len(self.__listaProcess)):
+            for j in range(0, i):
+                if self.__listaProcess[i].getID() < self.__listaProcess[j].getID():
+                    self.__listaProcess[i], self.__listaProcess[j] = self.__listaProcess[j], self.__listaProcess[i]
 
+        TME = 0#Tempo Médio de Espera
+
+        print("DESCRIÇÃO:----------------------------------------------------------")
+        print()
+        for i in range(0, len(self.__listaProcess)):
+            print("TTE processo[",i,"] : " + str(self.__listaProcess[i].getTTE()) + " ciclos")
+            TME += self.__listaProcess[i].getTTE()
+        TME = str(TME/(i+1))
+        
+        print("TME : " + TME + " ciclos")
+        print("THROUGHPUT : " + str(i+1) + " processos executados em "+ str(self.__ciclo) +" ciclos" )
+        print()
+        print("--------------------------------------------------------------------")
+        print("EXECUÇÃO:-----------------------------------------------------------")
+        print()
         for processo in self.__listaProcess:
             processo.printProcesso()
-
+        print()
+    
     def populaFila(self):
         if len(self.__listaProcess) > self.__indice:
             if self.__listaProcess[self.__indice].getTC() == self.__ciclo:
