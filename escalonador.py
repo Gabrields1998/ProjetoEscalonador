@@ -1,6 +1,17 @@
 import sys
 
 TIO = 2 #tempo em ciclos para IO
+red = "\033[41m"
+green = "\033[42m"
+orange = "\033[100m"
+blue = "\033[44m"
+yellow = "\033[103m"
+clean = "\033[49m"
+ESP = orange + "  " + clean + '|'
+EXEC = blue + "  " + clean + '|'
+BLOQ = red + "  " + clean + '|'
+INI = yellow + "  " + clean + '|'
+
 # --------------------------------Processos-------------------------------------
 class Processo:
     def __init__(self, processo):
@@ -13,6 +24,9 @@ class Processo:
         self.__cicloP = 0 #ciclo atual de execucao do processo
         self.__TB = 0 #tempo bloqueado
         self.__historico = ""
+    
+    def getID(self):
+        return self.__ID
 
     def getTC(self):
         return self.__TC
@@ -21,26 +35,25 @@ class Processo:
         return self.__DF - self.__cicloP
 
     def printProcesso(self):
-        print("processo[", self.__ID ,"]|", self.__historico ,"|", sep = "")
+        print("processo[", self.__ID ,"]|", self.__historico.replace('-', INI).replace('b', BLOQ).replace('e', EXEC).replace('s', ESP), sep = "")
 
     def bloqExecP(self):
         self.__TB += 1
-        self.__historico += "b,"
+        self.__historico += "b"
         if self.__TB == TIO:
             self.__TB = 0
             return 1
         return 0
 
     def espera(self):
-        self.__historico += "-,"
+        self.__historico += "-"
 
     def pronto(self):
-        self.__historico += "s,"
+        self.__historico += "s"
 
     def executaP(self):
         self.__cicloP += 1
-        print("Processo",self.__ID, self.__cicloP)
-        self.__historico += "e,"
+        self.__historico += "e"
         if self.__DF == self.__cicloP:
             return 1
         elif len(self.__IO) > self.__posIO:
@@ -82,16 +95,12 @@ class SJF:
                     for i in range(len(self.__fila)):
                         if(menorTempo > self.__fila[i].getTempoExec()):
                             menor = i
-                    print("menir", menor)
                     self.__execucao = self.__fila.pop(menor)
-            print("iteração: ", self.__ciclo, "proc: ", self.__execucao)
             for proc in self.__fila:
                 proc.pronto()
             
             if len(self.__filaBloqueio):
                 self.bloqExec(0)
-            
-            print(len(self.__fila), self.__ciclo)
             #salva o que aconteceu para cada processo fora do escalonador
             i = self.__indice
             j = len(self.__listaProcess)
@@ -114,6 +123,11 @@ class SJF:
                             Verdade = 0
             
     def historico(self):
+        for i in range(1, len(self.__listaProcess)):
+            for j in range(0, i):
+                if self.__listaProcess[i].getID() < self.__listaProcess[j].getID():
+                    self.__listaProcess[i], self.__listaProcess[j] = self.__listaProcess[j], self.__listaProcess[i]
+
         for processo in self.__listaProcess:
             processo.printProcesso()
 
@@ -124,14 +138,6 @@ class SJF:
                 self.__indice+=1
                 self.populaFila()
 
-    def ordenaTempo(self):
-        for i in range(0, len(self.__fila)):
-            print("i",i)
-            for j in range(i):
-                print(j)
-                if self.__fila[j].getTempoExec() >= self.__fila[i].getTempoExec(): 
-                    self.__fila[j],self.__fila[i] = self.__fila[i],self.__fila[j]
-                    
 # --------------------------------Escalonador-SJF-------------------------------
 
 # --------------------------------Main------------------------------------------
@@ -140,15 +146,12 @@ arquivo = open(sys.argv[1],'r')
 if arquivo == None:
     print("Erro na Leitura")
     exit(1)
-
 processos = arquivo.readlines()
-#------------fim-abre-arquivo-----------------------------
-#------------Ordena-Processos-----------------------------
+#-----------fim-abre-arquivo-----------------------------
+#-----------ordena-Processos-----------------------------
 listaP = []
-
 for processo in processos:
     listaP.append(Processo(processo.split()))
-
 for i in range(1,len(listaP)):
     for j in range(i):
         if listaP[j].getTC() >= listaP[i].getTC(): 
