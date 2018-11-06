@@ -135,9 +135,10 @@ class SJF:
         Verdade = 1
         while Verdade:
             self.populaFila()
-            ##Reordena os processos aptos
-            #self.ordenaTempo()
-            ##
+
+            # Pega um novo processo para execução,
+            # esse processo é aquele com o menor pico
+            # de execução
             if len(self.__fila):
                 if self.__execucao == 0:
                     menor = 0
@@ -147,36 +148,46 @@ class SJF:
                             menor = i
                     self.__execucao = self.__fila.pop(menor)
 
+            # Atualiza o Tamanho médio e máximo da fila
             self.__TMedF += len(self.__fila)
             if len(self.__fila) > self.__TMaxF:
                 self.__TMaxF = len(self.__fila)
-            
+
+            # Atualiza o historico dos processos aptos
             for proc in self.__fila:
                 proc.pronto()
-            
+
+            # Atualiza o historico dos processos bloqueados
             if len(self.__filaBloqueio):
                 self.bloqExec(0)
-            #salva o que aconteceu para cada processo fora do escalonador
+
+            # Salva o que aconteceu para cada processo fora do escalonador (que o TC é maior que o ciclo atual)
             i = self.__indice
             j = len(self.__listaProcess)
             while(i < j):
                 self.__listaProcess[i].espera()
                 i += 1
-            ##
+
+            # Executa o processo
             if self.__execucao != 0:
                 aux = self.__execucao.executaP()
-                if aux == 1:
+                if aux == 1: # Processo pronto
                     self.__execucao = 0
-                elif aux == 2:
+                elif aux == 2: # Processo bloqueado para I/O
                     self.__filaBloqueio.append(self.__execucao)
                     self.__execucao = 0
+
+            # Incrementa o ciclo
             self.__ciclo += 1
+
+            # Verifica se o escalonador está pronto para terminar
             if len(self.__listaProcess) == self.__indice:
                 if self.__execucao == 0:
                     if len(self.__fila) == 0:
                         if len(self.__filaBloqueio) == 0:
                             Verdade = 0
 
+        # Faz o calculo real do Tamanho médio da fila
         self.__TMedF = self.__TMedF / self.__ciclo
     #------------------------------------------------------------------------------
     # Imprime as informações resultantes da execução
@@ -291,48 +302,60 @@ class RoundRobin:
         Verdade = 1
         while Verdade:
             self.populaFila()
+
+            # Pega um novo processo para execução
             if len(self.__fila):
                 if self.__execucao == 0:
                     self.__execucao = self.__fila.pop(0)
-            
+
+            # Atualiza o Tamanho médio e máximo da fila
             self.__TMedF += len(self.__fila)
             if len(self.__fila) > self.__TMaxF:
                 self.__TMaxF = len(self.__fila)
-            
+
+            # Atualiza o historico dos processos aptos
             for proc in self.__fila:
                 proc.pronto()
-            
+
+            # Atualiza o historico dos processos bloqueados
             if len(self.__filaBloqueio):
                 self.bloqExec(0)
+
             #salva o que aconteceu para cada processo fora do escalonador
             i = self.__indice
             j = len(self.__listaProcess)
             while(i < j):
                 self.__listaProcess[i].espera()
                 i += 1
-            ##
+
+            # Executa o processo
             if self.__execucao != 0:
                 self.__quantum -= 1 
                 aux = self.__execucao.executaP()
-                if aux == 1:
+                if aux == 1: # Processo pronto
                     self.__execucao = 0
-                elif aux == 2:
+                elif aux == 2: # Processo bloqueado para I/O
                     self.__filaBloqueio.append(self.__execucao)
                     self.__execucao = 0
-                elif self.__quantum == 0:
+                elif self.__quantum == 0: # Verifica se o quantum já terminou
                     self.__fila.append(self.__execucao)
                     self.__execucao = 0
+
+            # Incrementa o ciclo
             self.__ciclo += 1
-                       
+
+            # Reinicia o valor do quantum se o processo foi retirado ou terminou de executar
             if self.__execucao == 0:
                 self.__quantum = 2
 
-            ## codigo para RR
+            # Verifica se o escalonador está pronto para terminar
             if len(self.__listaProcess) == self.__indice:
                 if self.__execucao == 0:
                     if len(self.__fila) == 0:
                         if len(self.__filaBloqueio) == 0:
                             Verdade = 0
+
+        # Faz o calculo real do Tamanho médio da fila
         self.__TMedF = self.__TMedF / self.__ciclo
 
 # ----------------------------Fim-Escalonador-Round-Robin--------------------------
@@ -403,6 +426,9 @@ class Prioridade:
         Verdade = 1
         while Verdade:
             self.populaFila()
+
+            # Pega um processo para execução com base na prioridade,
+            # a maior prioridade executa
             if len(self.__fila):
                 if self.__execucao == 0:
                     maxP = self.__fila[0].getPrio()
@@ -420,39 +446,46 @@ class Prioridade:
                     self.__fila.append(self.__execucao)
                     self.__execucao = self.__fila.pop(ind)
 
-            
+            # Atualiza o Tamanho médio e máximo da fila
             self.__TMedF += len(self.__fila)
             if len(self.__fila) > self.__TMaxF:
                 self.__TMaxF = len(self.__fila)
-            
+
+            # Atualiza o historico dos processos aptos
             for proc in self.__fila:
                 proc.pronto()
-            
+
+            # Atualiza o historico dos processos bloqueados
             if len(self.__filaBloqueio):
                 self.bloqExec(0)
+
             #salva o que aconteceu para cada processo fora do escalonador
             i = self.__indice
             j = len(self.__listaProcess)
             while(i < j):
                 self.__listaProcess[i].espera()
                 i += 1
-            ##
+
+            # Executa o processo
             if self.__execucao != 0:
                 aux = self.__execucao.executaP()
-                if aux == 1:
+                if aux == 1: # Processo pronto
                     self.__execucao = 0
-                elif aux == 2:
+                elif aux == 2: # Processo bloqueado para I/O
                     self.__filaBloqueio.append(self.__execucao)
                     self.__execucao = 0
+
+            # Incrementa o ciclo
             self.__ciclo += 1
-            
-            ## codigo para RR
+
+            # Verifica se o escalonador está pronto para terminar
             if len(self.__listaProcess) == self.__indice:
                 if self.__execucao == 0:
                     if len(self.__fila) == 0:
                         if len(self.__filaBloqueio) == 0:
                             Verdade = 0
-        
+
+        # Faz o calculo real do Tamanho médio da fila
         self.__TMedF = self.__TMedF / self.__ciclo
 
 # ----------------------------Fim-Escalonador-Prioridade---------------------------
